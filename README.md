@@ -2,6 +2,10 @@
 
 An end-to-end analysis of the IBM Telco Customer Churn dataset. The project cleans customer data, explores churn patterns, trains an interpretable logistic regression model, evaluates its performance, and converts the findings into practical retention recommendations.
 
+## Live demo
+
+Try the deployed prediction app here: [Customer Churn Prediction App](https://customer-churn-prediction-using-machine-learning-8u58yeufi66lk.streamlit.app/)
+
 ## Project workflow
 
 1. Load and validate the customer dataset.
