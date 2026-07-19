@@ -1,0 +1,41 @@
+feature,coefficient
+numeric__tenure,-1.2437827393474534
+categorical__Contract_Two year,-0.8154637056837887
+categorical__InternetService_DSL,-0.7014919417705071
+numeric__MonthlyCharges,-0.5995608341251016
+categorical__OnlineSecurity_No internet service,-0.3494692322321722
+categorical__StreamingTV_No internet service,-0.3494692322321722
+categorical__DeviceProtection_No internet service,-0.3494692322321722
+categorical__InternetService_No,-0.3494692322321722
+categorical__TechSupport_No internet service,-0.3494692322321722
+categorical__StreamingMovies_No internet service,-0.3494692322321722
+categorical__OnlineBackup_No internet service,-0.3494692322321722
+categorical__MultipleLines_No phone service,-0.2838161535112937
+categorical__MultipleLines_No,-0.279078888384508
+categorical__StreamingTV_No,-0.2639296459924068
+categorical__StreamingMovies_No,-0.263885555131071
+categorical__PaymentMethod_Credit card (automatic),-0.25163448720100484
+categorical__Dependents_Yes,-0.22334645146136609
+categorical__PaymentMethod_Bank transfer (automatic),-0.22130707741437883
+categorical__OnlineSecurity_Yes,-0.21707141251560053
+categorical__TechSupport_Yes,-0.191347739795989
+categorical__PhoneService_Yes,-0.1730118999521555
+categorical__Contract_One year,-0.17065820011914828
+categorical__PaymentMethod_Mailed check,-0.14634142930783867
+categorical__OnlineBackup_Yes,-0.09280553287096521
+categorical__DeviceProtection_No,-0.08258575840366382
+categorical__DeviceProtection_Yes,-0.024773062827636555
+categorical__OnlineBackup_No,-0.014553288360328405
+categorical__Partner_Yes,0.019405592494546757
+categorical__gender_Male,0.020961155035280357
+categorical__TechSupport_No,0.08398891856468621
+categorical__MultipleLines_Yes,0.10606698843233911
+categorical__OnlineSecurity_No,0.10971259128431463
+categorical__SeniorCitizen_Yes,0.14590671441811737
+categorical__StreamingMovies_Yes,0.1565267338997731
+categorical__StreamingTV_Yes,0.156570824761135
+categorical__PaymentMethod_Electronic check,0.1624549404597527
+categorical__PaperlessBilling_Yes,0.3704983798890098
+numeric__TotalCharges,0.5200753657503595
+categorical__Contract_Month-to-month,0.5292938523394616
+categorical__InternetService_Fiber optic,0.5941331205392122
