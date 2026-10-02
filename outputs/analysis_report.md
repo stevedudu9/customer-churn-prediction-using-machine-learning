@@ -2,7 +2,7 @@
 
 ## Executive summary
 
-The dataset contains **7,043 customers**. **1,869 customers churned**, giving an overall churn rate of **26.5%**. The logistic regression model achieved **80.6% accuracy**, **65.7% precision**, **55.9% recall**, and **84.2% ROC-AUC** on an unseen 20% test set.
+The public IBM Telco sample contains **7,043 customer records**. **1,869 are labelled churned**, giving an overall sample churn rate of **26.5%**. The logistic regression model achieved **80.6% accuracy**, **65.7% precision**, **55.9% recall**, and **ROC-AUC 0.842** on a stratified 20% test set held out from fitting (random state 42; 5,634 training / 1,409 test records). This is a retrospective classification benchmark, not a validated forecast of next-month churn.
 
 ## Main findings
 
@@ -10,7 +10,7 @@ The dataset contains **7,043 customers**. **1,869 customers churned**, giving an
 - **Fiber optic** customers show the highest internet-service churn rate at **41.9%**.
 - **Electronic check** has the highest payment-method churn rate at **45.3%**.
 - Churned customers have an average tenure of **18.0 months**, versus **37.6 months** for retained customers.
-- Churned customers pay **$74.44** per month on average, versus **$61.27** for retained customers.
+- Churned customers pay **USD 74.44** per month on average, versus **USD 61.27** for retained customers.
 
 ## Model evaluation
 
@@ -19,7 +19,10 @@ The dataset contains **7,043 customers**. **1,869 customers churned**, giving an
 | Accuracy | 0.806 |
 | Precision (churn) | 0.657 |
 | Recall (churn) | 0.559 |
+| F1 (churn) | 0.604 |
 | ROC-AUC | 0.842 |
+
+Precision, recall, F1, and the confusion matrix use the default 0.5 decision threshold. Predicting every test customer as staying would achieve 73.5% accuracy but zero churn recall. ROC-AUC measures ranking, not accuracy or calibrated individual risk.
 
 Confusion matrix (rows are actual classes; columns are predicted classes):
 
@@ -30,7 +33,7 @@ Confusion matrix (rows are actual classes; columns are predicted classes):
 
 ## Strong model indicators
 
-Positive coefficients increase predicted churn probability; negative coefficients reduce it. Coefficients describe associations in this model and should not be interpreted as proof of causation.
+Positive coefficients increase model log-odds with other encoded inputs fixed; negative coefficients reduce them. These are regularized conditional associations, not causal effects or a general feature-importance ranking. Numeric coefficients use standardized units. Multi-category variables retain all categories, so individual coefficients are not conventional odds ratios against an omitted reference category. Correlated tenure, monthly charges, and total charges make isolated coefficient interpretations fragile.
 
 | feature                                           |   coefficient |
 |:--------------------------------------------------|--------------:|
@@ -53,15 +56,20 @@ Positive coefficients increase predicted churn probability; negative coefficient
 
 ## Business recommendations
 
-1. **Prioritize new month-to-month customers.** Trigger onboarding support and proactive check-ins during the first year, when churn risk is highest.
+1. **Investigate shorter-tenure and month-to-month segments.** Consider testing onboarding support and proactive check-ins. The descriptive tenure comparison is cross-sectional, not a measured first-year churn hazard or cohort retention curve.
 2. **Encourage longer commitments.** Test loyalty discounts or service credits that make one- and two-year contracts attractive without eroding margin.
 3. **Review high-risk internet experiences.** Investigate service quality, pricing, and support journeys for the internet category with the highest churn.
-4. **Promote support and security services.** Offer relevant technical support and online-security bundles, especially to high-risk internet customers.
-5. **Use probability-based outreach.** Rank active customers by predicted churn probability and focus retention resources on customers with both high risk and high lifetime value.
-6. **Track intervention results.** Run controlled experiments and monitor recall, precision, retention lift, and campaign return on investment over time.
+4. **Explore support and security needs.** Consider testing relevant support offers; service associations do not establish that adding a bundle prevents churn.
+5. **Explore score-based outreach.** The score adds a multivariable ranking to segment summaries. Before operational use, define a future churn horizon, validate prospectively, check calibration, choose thresholds using offer costs and capacity, and obtain customer-value data. Lifetime value and treatment benefit are not measured here.
+6. **Test intervention results.** Randomly assign eligible customers to a defined retention action or control group before outreach. Predefine the follow-up horizon, churn/retention outcome, sample size, intention-to-treat comparison, margin/cost guardrails, and uncertainty intervals. Incremental retention and campaign ROI have not been measured in this project.
 
 ## Limitations
 
-- The dataset is a historical snapshot and does not include interaction history, complaints, service outages, or retention offers.
+- The dataset is a public demonstration snapshot, not this student's employer/customer data. It does not include dated interactions, complaints, service outages, or retention offers.
+- Feature measurement time relative to churn is not established here; a retrospective row split cannot prove prospective availability or exclude real-world outcome-time leakage.
+- Full-data descriptive analysis includes test rows. The test set is held out from fitting, not an independently untouched future/temporal validation set. No hyperparameter search is implemented.
+- Distinct customer IDs can have identical predictor profiles. The audited split has 13 test rows matching training profiles; grouped/temporal validation is a future robustness check.
+- Scores are not demonstrated to be calibrated probabilities. The app's 0.4/0.7 risk bands are illustrative, not optimized campaign thresholds.
+- Associations and retention suggestions do not establish causation or proven retention uplift.
 - Model performance should be revalidated on current company data before deployment.
-- Logistic regression is interpretable but may not capture every nonlinear customer behavior pattern.
+- Logistic regression assumes additive linear effects on log-odds, not on churn probability, and may miss nonlinear relationships.

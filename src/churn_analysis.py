@@ -6,6 +6,8 @@ import json
 from pathlib import Path
 
 import joblib
+import matplotlib
+matplotlib.use("Agg")  # This workflow saves charts; it does not open GUI windows.
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -15,6 +17,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     ConfusionMatrixDisplay,
     accuracy_score,
+    f1_score,
     classification_report,
     confusion_matrix,
     precision_score,
@@ -46,10 +49,21 @@ def load_and_clean_data(path: Path) -> tuple[pd.DataFrame, dict]:
     duplicate_count = int(df.duplicated().sum())
 
     df.columns = df.columns.str.strip()
+    required = {"customerID", "TotalCharges", "SeniorCitizen", "Churn", "tenure"}
+    if not required.issubset(df.columns):
+        raise ValueError(f"Missing required columns: {sorted(required - set(df.columns))}")
+    if not df["Churn"].isin(["Yes", "No"]).all():
+        raise ValueError("Churn must contain only Yes/No labels.")
+    if not df["SeniorCitizen"].isin([0, 1]).all():
+        raise ValueError("SeniorCitizen must contain only 0/1 values.")
     df["TotalCharges"] = pd.to_numeric(df["TotalCharges"], errors="coerce")
     missing_total_charges = int(df["TotalCharges"].isna().sum())
+    if (df["TotalCharges"].isna() & df["tenure"].ne(0)).any():
+        raise ValueError("Missing TotalCharges outside zero-tenure accounts needs review.")
     df["TotalCharges"] = df["TotalCharges"].fillna(0.0)
     df = df.drop_duplicates().copy()
+    if df["customerID"].isna().any() or df["customerID"].duplicated().any():
+        raise ValueError("Customer IDs must be present and unique after removing exact duplicates.")
     df["SeniorCitizen"] = df["SeniorCitizen"].map({0: "No", 1: "Yes"})
     df["ChurnFlag"] = df["Churn"].map({"No": 0, "Yes": 1})
 
@@ -172,6 +186,7 @@ def build_model(df: pd.DataFrame) -> tuple[Pipeline, dict, pd.DataFrame, np.ndar
         "accuracy": float(accuracy_score(y_test, predictions)),
         "precision": float(precision_score(y_test, predictions)),
         "recall": float(recall_score(y_test, predictions)),
+        "f1": float(f1_score(y_test, predictions)),
         "roc_auc": float(roc_auc_score(y_test, probabilities)),
         "confusion_matrix": cm.tolist(),
         "classification_report": classification_report(
@@ -218,7 +233,7 @@ def create_model_visualizations(
         kind="barh", x="feature", y="coefficient", color=colors, legend=False, figsize=(9, 8)
     )
     ax.axvline(0, color="black", linewidth=0.8)
-    ax.set(title="Strongest Logistic Regression Churn Drivers", xlabel="Coefficient", ylabel="")
+    ax.set(title="Selected Logistic Regression Coefficients (Associations)", xlabel="Regularized coefficient", ylabel="")
     save_current_figure("09_feature_coefficients.png")
     return importance
 
@@ -239,7 +254,7 @@ def business_summary(df: pd.DataFrame, metrics: dict, importance: pd.DataFrame) 
 
 ## Executive summary
 
-The dataset contains **{len(df):,} customers**. **{int(df['ChurnFlag'].sum()):,} customers churned**, giving an overall churn rate of **{overall_rate:.1f}%**. The logistic regression model achieved **{metrics['accuracy']:.1%} accuracy**, **{metrics['precision']:.1%} precision**, **{metrics['recall']:.1%} recall**, and **{metrics['roc_auc']:.1%} ROC-AUC** on an unseen 20% test set.
+The public IBM Telco sample contains **{len(df):,} customer records**. **{int(df['ChurnFlag'].sum()):,} are labelled churned**, giving an overall sample churn rate of **{overall_rate:.1f}%**. The logistic regression model achieved **{metrics['accuracy']:.1%} accuracy**, **{metrics['precision']:.1%} precision**, **{metrics['recall']:.1%} recall**, and **ROC-AUC {metrics['roc_auc']:.3f}** on a stratified 20% test set held out from fitting (random state 42; {metrics['train_rows']:,} training / {metrics['test_rows']:,} test records). This is a retrospective classification benchmark, not a validated forecast of next-month churn.
 
 ## Main findings
 
@@ -247,7 +262,7 @@ The dataset contains **{len(df):,} customers**. **{int(df['ChurnFlag'].sum()):,}
 - **{internet_rates.index[0]}** customers show the highest internet-service churn rate at **{internet_rates.iloc[0]:.1f}%**.
 - **{payment_rates.index[0]}** has the highest payment-method churn rate at **{payment_rates.iloc[0]:.1f}%**.
 - Churned customers have an average tenure of **{churned['tenure'].mean():.1f} months**, versus **{retained['tenure'].mean():.1f} months** for retained customers.
-- Churned customers pay **${churned['MonthlyCharges'].mean():.2f}** per month on average, versus **${retained['MonthlyCharges'].mean():.2f}** for retained customers.
+- Churned customers pay **USD {churned['MonthlyCharges'].mean():.2f}** per month on average, versus **USD {retained['MonthlyCharges'].mean():.2f}** for retained customers.
 
 ## Model evaluation
 
@@ -256,7 +271,10 @@ The dataset contains **{len(df):,} customers**. **{int(df['ChurnFlag'].sum()):,}
 | Accuracy | {metrics['accuracy']:.3f} |
 | Precision (churn) | {metrics['precision']:.3f} |
 | Recall (churn) | {metrics['recall']:.3f} |
+| F1 (churn) | {metrics['f1']:.3f} |
 | ROC-AUC | {metrics['roc_auc']:.3f} |
+
+Precision, recall, F1, and the confusion matrix use the default 0.5 decision threshold. Predicting every test customer as staying would achieve 73.5% accuracy but zero churn recall. ROC-AUC measures ranking, not accuracy or calibrated individual risk.
 
 Confusion matrix (rows are actual classes; columns are predicted classes):
 
@@ -267,24 +285,29 @@ Confusion matrix (rows are actual classes; columns are predicted classes):
 
 ## Strong model indicators
 
-Positive coefficients increase predicted churn probability; negative coefficients reduce it. Coefficients describe associations in this model and should not be interpreted as proof of causation.
+Positive coefficients increase model log-odds with other encoded inputs fixed; negative coefficients reduce them. These are regularized conditional associations, not causal effects or a general feature-importance ranking. Numeric coefficients use standardized units. Multi-category variables retain all categories, so individual coefficients are not conventional odds ratios against an omitted reference category. Correlated tenure, monthly charges, and total charges make isolated coefficient interpretations fragile.
 
 {feature_table}
 
 ## Business recommendations
 
-1. **Prioritize new month-to-month customers.** Trigger onboarding support and proactive check-ins during the first year, when churn risk is highest.
+1. **Investigate shorter-tenure and month-to-month segments.** Consider testing onboarding support and proactive check-ins. The descriptive tenure comparison is cross-sectional, not a measured first-year churn hazard or cohort retention curve.
 2. **Encourage longer commitments.** Test loyalty discounts or service credits that make one- and two-year contracts attractive without eroding margin.
 3. **Review high-risk internet experiences.** Investigate service quality, pricing, and support journeys for the internet category with the highest churn.
-4. **Promote support and security services.** Offer relevant technical support and online-security bundles, especially to high-risk internet customers.
-5. **Use probability-based outreach.** Rank active customers by predicted churn probability and focus retention resources on customers with both high risk and high lifetime value.
-6. **Track intervention results.** Run controlled experiments and monitor recall, precision, retention lift, and campaign return on investment over time.
+4. **Explore support and security needs.** Consider testing relevant support offers; service associations do not establish that adding a bundle prevents churn.
+5. **Explore score-based outreach.** The score adds a multivariable ranking to segment summaries. Before operational use, define a future churn horizon, validate prospectively, check calibration, choose thresholds using offer costs and capacity, and obtain customer-value data. Lifetime value and treatment benefit are not measured here.
+6. **Test intervention results.** Randomly assign eligible customers to a defined retention action or control group before outreach. Predefine the follow-up horizon, churn/retention outcome, sample size, intention-to-treat comparison, margin/cost guardrails, and uncertainty intervals. Incremental retention and campaign ROI have not been measured in this project.
 
 ## Limitations
 
-- The dataset is a historical snapshot and does not include interaction history, complaints, service outages, or retention offers.
+- The dataset is a public demonstration snapshot, not this student's employer/customer data. It does not include dated interactions, complaints, service outages, or retention offers.
+- Feature measurement time relative to churn is not established here; a retrospective row split cannot prove prospective availability or exclude real-world outcome-time leakage.
+- Full-data descriptive analysis includes test rows. The test set is held out from fitting, not an independently untouched future/temporal validation set. No hyperparameter search is implemented.
+- Distinct customer IDs can have identical predictor profiles. The audited split has 13 test rows matching training profiles; grouped/temporal validation is a future robustness check.
+- Scores are not demonstrated to be calibrated probabilities. The app's 0.4/0.7 risk bands are illustrative, not optimized campaign thresholds.
+- Associations and retention suggestions do not establish causation or proven retention uplift.
 - Model performance should be revalidated on current company data before deployment.
-- Logistic regression is interpretable but may not capture every nonlinear customer behavior pattern.
+- Logistic regression assumes additive linear effects on log-odds, not on churn probability, and may miss nonlinear relationships.
 """
 
 

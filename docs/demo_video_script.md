@@ -9,14 +9,14 @@ Aim for 60 to 90 seconds.
 **Show:** README title and visualizations.
 
 **Say:**  
-"This is my Customer Churn Prediction project using the IBM Telco Customer Churn dataset. The goal is to identify customers who are likely to leave, so a business can take action earlier."
+"This is my Customer Churn Prediction project using the IBM Telco Customer Churn dataset. The goal is to understand churn associations and suggest retention priorities to test; this is a retrospective sample-data demonstration."
 
 ## Scene 2: Dataset and workflow
 
 **Show:** Project workflow or repository structure.
 
 **Say:**  
-"The project includes data cleaning, exploratory analysis, visualizations, feature engineering, model training, evaluation, and business recommendations."
+"The project includes data cleaning, exploratory analysis, visualizations, encoding and scaling, model training, evaluation, and business recommendations."
 
 ## Scene 3: Key insights
 
@@ -30,14 +30,14 @@ Aim for 60 to 90 seconds.
 **Show:** Metrics or analysis report.
 
 **Say:**  
-"I used Logistic Regression because it is interpretable and suitable for binary classification. The model achieved about 80.6% accuracy and 84.2% ROC-AUC on the test set."
+"I used Logistic Regression because it is interpretable and suitable for binary classification. The model achieved about 80.6% accuracy and ROC-AUC 0.842 on the test set."
 
 ## Scene 5: App demo
 
 **Show:** Streamlit app.
 
 **Say:**  
-"I also created a simple app where a user can enter a customer profile and receive a churn prediction, churn probability, risk level, and suggested retention action."
+"I also created a simple app where a user can enter a customer profile and receive an illustrative model score, predicted label, risk band, and retention hypothesis; the score is not demonstrated to be calibrated."
 
 ## Scene 6: Limitations and improvements
 
@@ -51,4 +51,8 @@ Aim for 60 to 90 seconds.
 **Show:** README or app result screen.
 
 **Say:**  
-"This project demonstrates end-to-end machine learning, business analysis, visualization, model evaluation, and practical deployment."
+"This project demonstrates end-to-end machine learning, business analysis, visualization, model evaluation, and a local interactive demonstration. It does not establish production or intervention impact."
+
+## Audit qualifications (2026-10-02)
+
+The test set is held out from fitting, not a future temporal holdout. Full-sample exploratory analysis includes test rows; 13 test profiles match training profiles across distinct IDs. ROC-AUC is ranking, not accuracy. Probabilities and 0.4/0.7 app risk bands are not validated calibration or business thresholds. Coefficients are regularized associations on log-odds, not causal effects; multi-category dummy encoding and correlated charges limit isolated odds interpretations. No cohort/funnel analysis, experiments, retention uplift, or customer lifetime value were measured. The current README and generated analysis report contain the detailed qualification. Local changes have not been published or deployed.

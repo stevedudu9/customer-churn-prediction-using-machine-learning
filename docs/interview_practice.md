@@ -4,7 +4,7 @@ Use these answers to explain the project clearly in interviews.
 
 ## 1. What problem does this project solve?
 
-This project predicts whether a telecom customer is likely to churn. The business value is that companies can identify high-risk customers early and target them with retention strategies before they leave.
+This project predicts whether a telecom customer is likely to churn. The potential use is prioritization, but this snapshot does not demonstrate early warning or successful interventions. Timestamped prospective validation is needed.
 
 ## 2. Why did you choose Logistic Regression?
 
@@ -20,11 +20,11 @@ I used accuracy, precision, recall, ROC-AUC, and the confusion matrix. For churn
 
 ## 5. What were the final results?
 
-The model achieved about 80.6% accuracy, 65.7% precision, 55.9% recall, and 84.2% ROC-AUC on the test set.
+The model achieved about 80.6% accuracy, 65.7% precision, 55.9% recall, and ROC-AUC 0.842 on the test set.
 
 ## 6. What does ROC-AUC mean here?
 
-ROC-AUC measures how well the model separates churned customers from retained customers across different probability thresholds. A score of 84.2% means the model has good ranking ability.
+ROC-AUC measures how well the model separates churned customers from retained customers across different probability thresholds. A score of 0.842 estimates the chance that a randomly chosen labelled churner receives a higher score than a labelled non-churner, with ties receiving half credit. It is not accuracy or evidence of calibration.
 
 ## 7. What did you learn from the analysis?
 
@@ -40,7 +40,7 @@ I would tune the classification threshold, try class imbalance techniques, engin
 
 ## 10. How would the business use this model?
 
-The business could rank customers by churn probability and focus retention offers on high-risk customers with high lifetime value. The company should also track whether outreach improves retention compared with a control group.
+After prospective validation, the business could explore score-based prioritization. Customer lifetime value and treatment responsiveness are not estimated in this project. The company should also track whether outreach improves retention compared with a control group.
 
 ## 11. How would you explain false positives and false negatives?
 
@@ -49,3 +49,7 @@ A false positive is a customer predicted to churn who actually stays. This may w
 ## 12. What part of the project are you most proud of?
 
 I am proud that the project does not stop at model accuracy. It includes visual insights, model interpretation, business recommendations, a deployment-ready app, and a discussion of limitations.
+
+## Audit qualifications (2026-10-02)
+
+The test set is held out from fitting, not a future temporal holdout. Full-sample exploratory analysis includes test rows; 13 test profiles match training profiles across distinct IDs. ROC-AUC is ranking, not accuracy. Probabilities and 0.4/0.7 app risk bands are not validated calibration or business thresholds. Coefficients are regularized associations on log-odds, not causal effects; multi-category dummy encoding and correlated charges limit isolated odds interpretations. No cohort/funnel analysis, experiments, retention uplift, or customer lifetime value were measured. The current README and generated analysis report contain the detailed qualification. Local changes have not been published or deployed.

@@ -43,7 +43,7 @@ The business purpose is to identify customers at higher risk of leaving so the c
 
 ## Latest model output
 
-The final verified Logistic Regression model was trained on 7,043 customer records.
+The dataset contains 7,043 records; the model was fitted on 5,634 training records and evaluated on 1,409 held-out-from-fitting test records.
 
 | Measurement | Result |
 |---|---:|
@@ -53,10 +53,10 @@ The final verified Logistic Regression model was trained on 7,043 customer recor
 | Accuracy | 80.6% |
 | Precision | 65.7% |
 | Recall | 55.9% |
-| ROC-AUC | 84.2% |
+| ROC-AUC | 0.842 (ranking, not accuracy) |
 | Confusion matrix | TN 926, FP 109, FN 165, TP 209 |
 
-The ROC-AUC of 84.2% shows the model distinguishes reasonably well between customers who churn and customers who stay. The recall of 55.9% means it identifies over half of the customers who actually churn at the default 0.5 threshold. This is a solid baseline model, but not a claim of perfection; threshold tuning and comparison with other models can improve the retention-campaign trade-off.
+The ROC-AUC of 0.842 shows the model distinguishes reasonably well between customers who churn and customers who stay. The recall of 55.9% means it identifies over half of the customers who actually churn at the default 0.5 threshold. This is a solid baseline model, but not a claim of perfection; threshold tuning and comparison with other models can improve the retention-campaign trade-off.
 
 ## Main churn insights
 
@@ -90,6 +90,10 @@ Running the analysis script regenerates the outputs. Then the Streamlit command 
 
 ## Model limitations and next improvements
 
-Logistic Regression is a good, interpretable baseline, but it assumes largely linear relationships between the predictors and churn probability. The default 0.5 prediction threshold balances overall performance but misses some eventual churners.
+Logistic Regression is a good, interpretable baseline, but it assumes additive linear relationships between encoded predictors and churn log-odds. The default 0.5 threshold was not optimized for business costs and misses 165 of 374 test churners.
 
 Potential next steps are threshold tuning based on the cost of retention offers, class-imbalance techniques, more feature engineering, and comparison against models such as Random Forest or Gradient Boosting. Any model should also be validated on recent real company data before business use.
+
+## Audit qualifications (2026-10-02)
+
+The test set is held out from fitting, not a future temporal holdout. Full-sample exploratory analysis includes test rows; 13 test profiles match training profiles across distinct IDs. ROC-AUC is ranking, not accuracy. Probabilities and 0.4/0.7 app risk bands are not validated calibration or business thresholds. Coefficients are regularized associations on log-odds, not causal effects; multi-category dummy encoding and correlated charges limit isolated odds interpretations. No cohort/funnel analysis, experiments, retention uplift, or customer lifetime value were measured. The current README and generated analysis report contain the detailed qualification. Local changes have not been published or deployed.

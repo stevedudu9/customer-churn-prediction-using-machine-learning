@@ -1,74 +1,92 @@
-# Customer Churn Prediction
+# Customer Churn Prediction / Retention Analytics
 
-[![Live demo](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://customer-churn-prediction-using-machine-learning-8u58yeufi66lk.streamlit.app/) [![Repository](https://img.shields.io/badge/GitHub-Repository-181717?logo=github)](https://github.com/stevedudu9/customer-churn-prediction-using-machine-learning) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+Which customer patterns are associated with churn, and where should a business investigate retention opportunities? This student project combines descriptive customer analysis and interpretable logistic regression on a public IBM Telco sample. It recommends priorities to test; it does not demonstrate causal effects or production impact.
 
-End-to-end customer-churn analysis using the IBM Telco dataset. The project cleans data, explores churn patterns, trains an interpretable logistic-regression model, evaluates performance, and translates findings into retention recommendations.
+## Dataset and key findings
 
-## Live demo
+The checked-in `data/WA_Fn-UseC_-Telco-Customer-Churn.csv` contains 7,043 customer records and 21 original columns. [IBM's original example](https://github.com/IBM/customer-churn-prediction) identifies this filename as its sample dataset. It is demonstration data, not customer data collected by this student. The snapshot has no explicit future prediction horizon or dated product events.
 
-[Open the prediction app](https://customer-churn-prediction-using-machine-learning-8u58yeufi66lk.streamlit.app/)
+| Comparison | Calculation | Result |
+|---|---|---:|
+| Overall sample churn | 1,869 / 7,043 | 26.5% |
+| Month-to-month churn | 1,655 / 3,875 | 42.7% |
+| One-year contract churn | 166 / 1,473 | 11.3% |
+| Two-year contract churn | 48 / 1,695 | 2.8% |
+| Mean tenure, churned | 33,603 / 1,869 months | 18.0 months |
+| Mean tenure, stayed | 194,387 / 5,174 months | 37.6 months |
 
-## Screenshots
+![Observed churn by contract](outputs/figures/02_churn_by_contract.png)
 
-![Churn distribution](outputs/figures/01_churn_distribution.png)
+These are full-sample associations. Contract choice can reflect customer differences, and churn can truncate tenure. These figures do not establish that longer contracts prevent churn. Tenure segments are not acquisition cohorts, a funnel, or a survival analysis.
 
-## Features
+## Analytical approach and model evaluation
 
-- Exploratory analysis of churn drivers
-- Reproducible preprocessing and stratified evaluation
-- Interpretable logistic-regression risk scoring
-- Streamlit prediction interface and retention recommendations
+1. Convert `TotalCharges` to numeric. All 11 blank values have zero tenure and are assigned zero total charges under that explicit assumption. Missing charges outside zero-tenure records require review.
+2. Check exact duplicates, unique IDs, and target encoding (`Yes=1`, `No=0`). Map `SeniorCitizen` to categorical Yes/No.
+3. Exclude `customerID`, `Churn`, and `ChurnFlag`. Use the remaining 19 predictors.
+4. Split rows 80/20 with `stratify=y`, `random_state=42`: 5,634 training / 1,409 test records. Test counts: 374 churned / 1,035 stayed.
+5. Fit training-only preprocessing: numeric median imputation and standardization; categorical mode imputation and one-hot encoding (`drop='if_binary'`, unknowns ignored). Output: 40 encoded features.
+6. Fit regularized logistic regression: lbfgs, C=1, max_iter=2000, no class weighting or resampling. No hyperparameter or threshold search is implemented.
 
-## Technology stack
+| Metric | Test result |
+|---|---:|
+| ROC-AUC | **0.8419695678 → 0.842** |
+| Accuracy | 0.8055358410 → 80.6% |
+| Precision, churn | 0.6572327044 → 65.7% |
+| Recall, churn | 0.5588235294 → 55.9% |
+| F1, churn | 0.6040462428 → 0.604 |
 
-Python, Streamlit, pandas, scikit-learn, Matplotlib, seaborn, and logistic regression.
+Threshold-based metrics use 0.5. Confusion matrix: TN 926, FP 109, FN 165, TP 209. Always predicting stay gives 73.5% accuracy and zero churn recall. **ROC-AUC 0.842 is not 84.2% accuracy**; it measures ranking. Calibration has not been established.
 
-## Installation
+Test rows are excluded from fitting. Full-data EDA includes them, so this is not independently untouched temporal validation. Customer IDs are distinct; 13 test records share identical predictor profiles with training records. Excluding these profiles as a diagnostic gives AUC 0.8428343700 on 1,396 rows; it does not replace the benchmark or create a new independent holdout. Measurement time relative to churn is unknown, so prospective outcome-time leakage cannot be ruled out from the CSV alone.
+
+Coefficients are regularized conditional associations on log-odds. Numeric coefficients use standardized units. Multi-category variables retain all categories, so individual coefficients are not conventional odds ratios against an omitted reference. Correlated tenure/charges and redundant service variables limit isolated interpretations. Coefficients are not causal effects or absolute feature-importance rankings.
+
+## Business implications
+
+- Investigate onboarding/support needs in month-to-month and shorter-tenure segments.
+- Explore service/pricing hypotheses without diagnosing service faults from churn labels alone.
+- Use multivariable ranking only after prospective validation, calibration checks, and cost/capacity-based threshold selection.
+- Test a defined action with randomized treatment/control assignment, a fixed horizon, intention-to-treat outcomes, uncertainty intervals, and cost/margin guardrails.
+
+No intervention, incremental retention, revenue uplift, customer lifetime value, or campaign ROI was measured. Product-analytics relevance includes segmentation, retention questions, tenure, and KPI interpretation. Cohort/funnel analysis, behavioral events, and A/B testing are future extensions.
+
+## Local run and validation
+
+Tested with Python 3.12.14. Direct dependencies are pinned; the saved model uses scikit-learn 1.9.0. Cross-version model loading is [unsupported](https://scikit-learn.org/stable/model_persistence.html). Only load the trusted project artifact; rerun training when rebuilding it.
 
 ```bash
-git clone https://github.com/stevedudu9/customer-churn-prediction-using-machine-learning.git
-cd customer-churn-prediction-using-machine-learning
-python -m pip install -r requirements.txt
-```
-
-## Running locally
-
-```bash
+python -m venv .venv
+# Activate .venv using your platform's command.
+python -m pip install -r requirements-dev.txt
 python src/churn_analysis.py
-streamlit run app.py
+python -m pytest -q
+python -m streamlit run app.py
 ```
 
-## Project structure
+Training regenerates outputs. Direct pins are not a full transitive lock or cross-platform bit-for-bit guarantee.
+
+## Structure and technologies
 
 ```text
-app.py                 Streamlit prediction application
-src/churn_analysis.py  Analysis and modelling workflow
-data/                  IBM Telco source data
-outputs/               Metrics, figures, reports, and model artefacts
-docs/                  Supporting materials
+app.py                 Single-page Streamlit application
+src/churn_analysis.py  Cleaning, plots, pipeline, evaluation, report
+data/                 Original sample CSV
+outputs/               Cleaned CSV, predictions, metrics, coefficients, charts, model
+tests/                Reproduction, split-boundary, input and app tests
+docs/                 Technical and presentation materials
 ```
 
-## Methodology
+Python, pandas, NumPy, scikit-learn, Matplotlib, Streamlit, joblib. No notebooks, SQL analysis, Power BI reports, production integration, or completed experiments are included.
 
-The workflow cleans `TotalCharges`, explores churn by customer and service characteristics, performs a stratified train/test split, encodes categorical inputs, and evaluates logistic regression with accuracy, precision, recall, ROC-AUC, and a confusion matrix.
+## App, demo and limitations
 
-## Validation and testing
+The app shows customer findings first, then an illustrative scorer, segment counts, model metrics, and report. Risk bands 0.4/0.7 are illustrative, not optimized business thresholds. Service inputs enforce basic consistency. Scores do not establish a future churn probability.
 
-Run the analysis script before the app so the reusable model pipeline and generated outputs are refreshed. Review the saved metrics, ROC curve, and confusion matrix.
+[Existing demo](https://customer-churn-prediction-using-machine-learning-8u58yeufi66lk.streamlit.app/) · [Repository](https://github.com/stevedudu9/customer-churn-prediction-using-machine-learning) · [Portfolio](https://stevedudu9.github.io)
 
-## Limitations
-
-The model reflects the IBM Telco dataset and a linear classification approach. Performance and recommendations should be revalidated for any new business context.
-
-## Future improvements
-
-- Add automated model-regression checks.
-- Compare calibrated and non-linear baseline models.
+Local audit improvements have not been deployed. The public demo may sleep or differ from the local version. Revalidate on current business data before operational use, including feature timing, fairness, calibration, and temporal/grouped robustness. Demographic predictors require governance review before targeting.
 
 ## License
 
-Distributed under the [MIT License](LICENSE).
-
----
-
-Built by [Steve Dudu](https://github.com/stevedudu9) · [Portfolio](https://github.com/stevedudu9/data-portfolio)
+Project code: [MIT](LICENSE). Retain sample-data source attribution; the code license does not establish separate dataset rights.

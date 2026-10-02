@@ -11,7 +11,7 @@ The task is a binary classification problem:
 - `Churn = Yes`: the customer left.
 - `Churn = No`: the customer stayed.
 
-The model learns patterns from historical customers and predicts the probability that a new customer will churn.
+The model classifies a labelled demonstration snapshot. A prospective horizon and feature measurement times are not established, and calibration has not been demonstrated.
 
 ## Data preparation
 
@@ -35,7 +35,7 @@ The analysis found several churn patterns:
 - Customers who churned had shorter average tenure.
 - Churned customers had higher average monthly charges.
 
-These patterns are useful because they turn model outputs into business actions.
+These associations suggest hypotheses to investigate and test, not proven business interventions.
 
 ## Model choice
 
@@ -56,7 +56,7 @@ The project uses a Scikit-learn pipeline:
 - Categorical features are mode-imputed and one-hot encoded.
 - The model is trained only after preprocessing is fitted on the training data.
 
-This prevents data leakage because information from the test set is not used during training.
+This prevents learned preprocessing from using test-set statistics. Full-data EDA includes test rows, and prospective outcome-time leakage cannot be ruled out without timestamped feature definitions.
 
 ## Evaluation metrics
 
@@ -73,9 +73,9 @@ The final model achieved:
 - Accuracy: 80.6%
 - Precision: 65.7%
 - Recall: 55.9%
-- ROC-AUC: 84.2%
+- ROC-AUC: 0.842 (ranking, not accuracy)
 
-The ROC-AUC score is strong for this dataset, but recall shows that the model still misses some customers who eventually churn.
+ROC-AUC 0.842 describes retrospective ranking on this split. At 0.5, recall is 55.9%; 165 of 374 labelled test churners are missed.
 
 ## Business recommendations
 
@@ -102,3 +102,7 @@ Future improvements could include:
 ## Conclusion
 
 This project demonstrates a complete machine learning workflow from data cleaning and visualization to model training, evaluation, interpretation, and deployment. More importantly, it connects model results to business decisions, which is the key value of churn prediction.
+
+## Audit qualifications (2026-10-02)
+
+The test set is held out from fitting, not a future temporal holdout. Full-sample exploratory analysis includes test rows; 13 test profiles match training profiles across distinct IDs. ROC-AUC is ranking, not accuracy. Probabilities and 0.4/0.7 app risk bands are not validated calibration or business thresholds. Coefficients are regularized associations on log-odds, not causal effects; multi-category dummy encoding and correlated charges limit isolated odds interpretations. No cohort/funnel analysis, experiments, retention uplift, or customer lifetime value were measured. The current README and generated analysis report contain the detailed qualification. Local changes have not been published or deployed.

@@ -7,3 +7,4 @@ venv/
 work/
 .agents/
 .codex/
+.pytest_cache/
