@@ -85,7 +85,7 @@ The app shows customer findings first, then an illustrative scorer, segment coun
 
 [Existing demo](https://customer-churn-prediction-using-machine-learning-8u58yeufi66lk.streamlit.app/) · [Repository](https://github.com/stevedudu9/customer-churn-prediction-using-machine-learning) · [Portfolio](https://stevedudu9.github.io)
 
-Local audit improvements have not been deployed. The public demo may sleep or differ from the local version. Revalidate on current business data before operational use, including feature timing, fairness, calibration, and temporal/grouped robustness. Demographic predictors require governance review before targeting.
+The public demo reflects the reviewed project version but may sleep when inactive. Revalidate on current business data before operational use, including feature timing, fairness, calibration, and temporal/grouped robustness. Demographic predictors require governance review before targeting.
 
 ## License
 
